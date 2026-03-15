@@ -28,46 +28,95 @@ class SuggestionEngine {
     }
   }
 
-  // Lightweight suggestions (synchronous)
+  // Lightweight suggestions (synchronous) - focused on current sentence
   getLightweightSuggestions(text) {
-    const suggestions = [];
+    // Get current sentence from cursor position
+    const currentSentence = this.getCurrentSentence(text);
 
-    // Check for filler words
-    const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+    if (!currentSentence || currentSentence.trim().length < 5) {
+      return { sentence: [], words: [] };
+    }
+
+    const sentenceSuggestions = [];
+    const wordSuggestions = [];
+
+    // Word-level suggestions: filler words in current sentence
+    const words = currentSentence.toLowerCase().match(/\b\w+\b/g) || [];
     const fillerWords = words.filter(word => isFillerWord(word));
 
     fillerWords.slice(0, 3).forEach(word => {
       const feedback = getFillerWordFeedback(word);
       if (feedback) {
-        suggestions.push({
+        wordSuggestions.push({
           type: 'filler',
           text: `"${word}" - ${feedback.alternative}`,
           severity: feedback.severity,
+          targetWord: word,
         });
       }
     });
 
-    // Get writing tips
-    const tips = getWritingTips(text);
-    tips.forEach(tip => {
-      suggestions.push({
+    // Sentence-level suggestions: structural issues
+    const sentenceTips = this.getSentenceTips(currentSentence);
+    sentenceTips.forEach(tip => {
+      sentenceSuggestions.push({
         type: 'tip',
         text: tip,
         severity: 'info',
       });
     });
 
-    return suggestions.slice(0, 5); // Max 5 suggestions
+    return {
+      sentence: sentenceSuggestions.slice(0, 3),
+      words: wordSuggestions.slice(0, 3),
+    };
   }
 
-  // Ollama suggestions (async)
+  // Get current sentence being edited
+  getCurrentSentence(text) {
+    // Get last sentence (what user is currently writing)
+    const sentences = text.match(/[^.!?]*[.!?]+/g) || [];
+    if (sentences.length > 0) {
+      return sentences[sentences.length - 1].trim();
+    }
+    // If no punctuation, return last few words as "current sentence"
+    const words = text.trim().split(/\s+/);
+    return words.slice(-20).join(' ');
+  }
+
+  // Get tips specific to sentence structure
+  getSentenceTips(sentence) {
+    const tips = [];
+    const words = sentence.trim().split(/\s+/);
+
+    // Check for long sentences
+    if (words.length > 35) {
+      tips.push('Long sentence: Consider breaking it up');
+    }
+
+    // Check for passive voice
+    if (hasPassiveVoice(sentence)) {
+      tips.push('Passive voice detected: Use active voice');
+    }
+
+    // Check for hedge words
+    if (/\b(I think|I believe|in my opinion|maybe|perhaps|might)\b/i.test(sentence)) {
+      tips.push('Hedging: Be more confident and direct');
+    }
+
+    return tips;
+  }
+
+  // Ollama suggestions (async) - focused on current sentence
   async getOllamaSuggestions(text) {
     try {
-      // Select last sentence or last 2 sentences
-      const sentences = text.match(/[^.!?]*[.!?]+/g) || [text];
-      const lastSentence = sentences.slice(-1)[0] || text;
+      const currentSentence = this.getCurrentSentence(text);
 
-      const prompt = `Suggest 3-4 ways to improve this sentence for better clarity and emotional impact: "${lastSentence.trim()}"
+      if (!currentSentence || currentSentence.trim().length < 5) {
+        return { sentence: [], words: [] };
+      }
+
+      const prompt = `Suggest 2-3 ways to improve this sentence for better clarity and emotional impact: "${currentSentence.trim()}"
 Be concise. Format as bullet points.`;
 
       const response = await fetch(`${this.ollamaUrl}/api/generate`, {
@@ -89,17 +138,22 @@ Be concise. Format as bullet points.`;
       const aiResponse = data.response || '';
 
       // Parse response into suggestions
-      const suggestions = aiResponse
+      const sentenceSuggestions = aiResponse
         .split('\n')
         .filter(line => line.trim())
-        .slice(0, 4)
+        .slice(0, 3)
         .map(line => ({
           type: 'ollama',
           text: line.replace(/^[\d\-•*\.]\s*/, '').trim(),
           severity: 'info',
         }));
 
-      return suggestions.length > 0 ? suggestions : this.getLightweightSuggestions(text);
+      // Also get word-level suggestions
+      const wordSuggestions = this.getLightweightSuggestions(text).words;
+
+      return sentenceSuggestions.length > 0 || wordSuggestions.length > 0
+        ? { sentence: sentenceSuggestions, words: wordSuggestions }
+        : this.getLightweightSuggestions(text);
     } catch (error) {
       console.error('Ollama fetch error:', error);
       // Fallback to lightweight

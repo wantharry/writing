@@ -169,22 +169,39 @@ html, body {
 }
 
 .suggestions-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.suggestion-column {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 
+.suggestion-column-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
 .suggestion-item {
-  display: inline-block;
+  display: block;
   background-color: var(--primary-light);
   color: var(--primary);
   padding: 6px 10px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid transparent;
   user-select: none;
+  line-height: 1.4;
 }
 
 .suggestion-item:hover {
@@ -192,6 +209,7 @@ html, body {
   color: white;
   border-color: var(--primary);
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 
 .word-count {

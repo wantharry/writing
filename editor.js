@@ -63,23 +63,88 @@ const Editor = {
     }
   },
 
-  // Display suggestions in panel
-  displaySuggestions(suggestions) {
+  // Display suggestions in two-column layout
+  displaySuggestions(suggestionGroups) {
     const content = this.panel.querySelector('.suggestions-content');
     content.innerHTML = '';
 
-    suggestions.forEach(suggestion => {
-      const item = document.createElement('div');
-      item.className = 'suggestion-item';
-      item.textContent = suggestion.text;
-      item.title = `Click to apply • [${suggestion.type}]`;
-      item.style.cursor = 'pointer';
+    // Handle both old format (array) and new format (object with sentence/words)
+    if (Array.isArray(suggestionGroups)) {
+      this.displaySuggestionsLegacy(suggestionGroups);
+      return;
+    }
 
-      // Make suggestions clickable
-      item.addEventListener('click', () => {
-        this.handleSuggestionClick(suggestion);
+    const { sentence = [], words = [] } = suggestionGroups;
+
+    if (sentence.length === 0 && words.length === 0) {
+      this.hideSuggestions();
+      return;
+    }
+
+    content.style.display = 'grid';
+    content.style.gridTemplateColumns = '1fr 1fr';
+    content.style.gap = '12px';
+
+    // Sentence suggestions (left column)
+    if (sentence.length > 0) {
+      const sentenceCol = document.createElement('div');
+      sentenceCol.className = 'suggestion-column';
+      const sentenceHeader = document.createElement('div');
+      sentenceHeader.className = 'suggestion-column-header';
+      sentenceHeader.textContent = 'Sentence';
+      sentenceCol.appendChild(sentenceHeader);
+
+      sentence.forEach(suggestion => {
+        const item = this.createSuggestionItem(suggestion);
+        sentenceCol.appendChild(item);
       });
+      content.appendChild(sentenceCol);
+    }
 
+    // Word suggestions (right column)
+    if (words.length > 0) {
+      const wordsCol = document.createElement('div');
+      wordsCol.className = 'suggestion-column';
+      const wordsHeader = document.createElement('div');
+      wordsHeader.className = 'suggestion-column-header';
+      wordsHeader.textContent = 'Words';
+      wordsCol.appendChild(wordsHeader);
+
+      words.forEach(suggestion => {
+        const item = this.createSuggestionItem(suggestion);
+        wordsCol.appendChild(item);
+      });
+      content.appendChild(wordsCol);
+    }
+
+    this.showSuggestions();
+  }
+
+  // Create individual suggestion item
+  createSuggestionItem(suggestion) {
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+    item.textContent = suggestion.text;
+    item.title = `Click to apply`;
+    item.style.cursor = 'pointer';
+
+    // Make suggestions clickable
+    item.addEventListener('click', () => {
+      this.handleSuggestionClick(suggestion);
+    });
+
+    return item;
+  }
+
+  // Legacy support for array-based suggestions
+  displaySuggestionsLegacy(suggestions) {
+    const content = this.panel.querySelector('.suggestions-content');
+    content.style.display = 'flex';
+    content.style.gridTemplateColumns = 'initial';
+    content.style.gap = '8px';
+
+    suggestions.forEach(suggestion => {
+      const item = this.createSuggestionItem(suggestion);
       content.appendChild(item);
     });
 
