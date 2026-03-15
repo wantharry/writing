@@ -162,11 +162,12 @@ html, body {
   position: relative;
   flex: 1;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .writing-pad {
-  flex: 1;
+  flex: 0 0 50%;
   border: none;
   padding: 24px;
   font-size: 16px;
@@ -176,6 +177,8 @@ html, body {
   resize: none;
   font-family: 'Georgia', serif;
   outline: none;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
 }
 
 .writing-pad::placeholder {
@@ -184,71 +187,67 @@ html, body {
 }
 
 .suggestions-panel {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-height: 150px;
+  flex: 0 0 50%;
   background-color: var(--bg-secondary);
   border-top: 1px solid var(--border);
-  padding: 12px 24px;
+  padding: 16px 24px;
   overflow-y: auto;
   font-size: 14px;
   color: var(--text-light);
-  opacity: 0;
-  transform: translateY(20px);
-  pointer-events: none;
-  transition: all 0.3s ease-out;
+  display: none;
 }
 
 .suggestions-panel.active {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+  display: block;
 }
 
 .suggestions-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 24px;
+  height: 100%;
 }
 
 .suggestion-column {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 .suggestion-column-header {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.8px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .suggestion-item {
   display: block;
   background-color: var(--primary-light);
   color: var(--primary);
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 11px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid transparent;
   user-select: none;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .suggestion-item:hover {
   background-color: var(--primary);
   color: white;
   border-color: var(--primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
 }
 
 .word-count {
