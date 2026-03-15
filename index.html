@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writing Pad</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="nav-content">
+        <button class="nav-btn active" data-view="editor">✏️ Write</button>
+        <button class="nav-btn" data-view="history">📚 History</button>
+        <button class="nav-btn" data-view="settings">⚙️ Settings</button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Editor View -->
+      <div id="editor-view" class="view active">
+        <div class="editor-container">
+          <textarea id="writing-pad" class="writing-pad" placeholder="Start writing... Suggestions will appear as you type."></textarea>
+          <div class="suggestions-panel" id="suggestions-panel">
+            <div class="suggestions-content"></div>
+          </div>
+        </div>
+        <div class="word-count">Words: <span id="word-count">0</span></div>
+      </div>
+
+      <!-- History View -->
+      <div id="history-view" class="view">
+        <div class="history-header">
+          <h1>Your Writings</h1>
+          <input type="text" id="history-search" class="search-box" placeholder="Search by date or tag...">
+        </div>
+        <div class="history-grid" id="history-grid"></div>
+      </div>
+
+      <!-- Settings View -->
+      <div id="settings-view" class="view">
+        <div class="settings-container">
+          <h1>Settings</h1>
+
+          <div class="settings-section">
+            <h2>Suggestion Mode</h2>
+            <div class="setting-group">
+              <label>
+                <input type="radio" name="suggestion-mode" value="lightweight" checked> Lightweight (fast, built-in)
+              </label>
+              <label>
+                <input type="radio" name="suggestion-mode" value="ollama"> Ollama (local AI)
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section" id="ollama-settings" style="display: none;">
+            <h2>Ollama Configuration</h2>
+            <div class="setting-group">
+              <label>Ollama URL:</label>
+              <input type="text" id="ollama-url" value="http://localhost:11434" class="setting-input">
+            </div>
+            <div class="setting-group">
+              <label>Model Name:</label>
+              <input type="text" id="ollama-model" value="llama3" class="setting-input" placeholder="e.g. llama3, mistral">
+            </div>
+            <button id="test-ollama-btn" class="btn btn-secondary">Test Connection</button>
+            <div id="ollama-status" class="status-message"></div>
+          </div>
+
+          <div class="settings-section">
+            <h2>Theme</h2>
+            <div class="setting-group">
+              <label>
+                <input type="radio" name="theme" value="light" checked> Light
+              </label>
+              <label>
+                <input type="radio" name="theme" value="dark"> Dark
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h2>Data</h2>
+            <button id="clear-all-btn" class="btn btn-danger">Clear All Data</button>
+            <p class="info-text">This will delete all saved writings. This cannot be undone.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Word Alternatives Popup -->
+    <div id="word-popup" class="word-popup" style="display: none;">
+      <div class="popup-content"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="synonyms.js"></script>
+  <script src="storage.js"></script>
+  <script src="suggestions.js"></script>
+  <script src="editor.js"></script>
+  <script src="history.js"></script>
+  <script src="settings.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
