@@ -38,15 +38,15 @@ const Editor = {
   async checkLLMConnection() {
     const settings = storage.getSettings();
     if (settings.suggestionMode !== 'ollama') {
-      this.updateLLMStatus(false, 'Lightweight mode');
+      this.updateLLMStatus(true, 'Lightweight');
       return;
     }
 
     try {
       const result = await suggestionEngine.testOllamaConnection();
-      this.updateLLMStatus(result.success, result.success ? 'Connected' : 'Disconnected');
+      this.updateLLMStatus(result.success, result.success ? 'LLM Online' : 'LLM Offline');
     } catch (error) {
-      this.updateLLMStatus(false, 'Error');
+      this.updateLLMStatus(false, 'LLM Offline');
     }
   },
 
@@ -165,7 +165,7 @@ const Editor = {
     }
 
     this.showSuggestions();
-  }
+  },
 
   // Create individual suggestion item
   createSuggestionItem(suggestion) {
@@ -181,7 +181,7 @@ const Editor = {
     });
 
     return item;
-  }
+  },
 
   // Legacy support for array-based suggestions
   displaySuggestionsLegacy(suggestions) {
@@ -398,7 +398,7 @@ const Editor = {
   // Focus pad
   focus() {
     this.pad.focus();
-  },
+  }
 };
 
 // Initialize editor when DOM is ready
