@@ -1,0 +1,21 @@
+{
+  "name": "writing-pad",
+  "version": "1.0.0",
+  "description": "A distraction-free writing pad with AI suggestions",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [
+    "writing",
+    "suggestions",
+    "ai"
+  ],
+  "author": "Harry",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.3.0"
+  }
+}
