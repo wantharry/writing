@@ -72,11 +72,92 @@ const Editor = {
       const item = document.createElement('div');
       item.className = 'suggestion-item';
       item.textContent = suggestion.text;
-      item.title = `[${suggestion.type}] ${suggestion.text}`;
+      item.title = `Click to apply • [${suggestion.type}]`;
+      item.style.cursor = 'pointer';
+
+      // Make suggestions clickable
+      item.addEventListener('click', () => {
+        this.handleSuggestionClick(suggestion);
+      });
+
       content.appendChild(item);
     });
 
     this.showSuggestions();
+  },
+
+  // Handle suggestion click - highlight issue and show options
+  handleSuggestionClick(suggestion) {
+    const text = this.pad.value;
+    let startPos = -1;
+    let endPos = -1;
+    let targetWord = null;
+
+    // Parse suggestion text to find what to highlight
+    if (suggestion.type === 'filler') {
+      // Extract word from suggestion like: "very" - Remove or replace
+      const match = suggestion.text.match(/^"([^"]+)"/);
+      if (match) {
+        targetWord = match[1];
+        startPos = text.toLowerCase().indexOf(targetWord.toLowerCase());
+        if (startPos !== -1) {
+          endPos = startPos + targetWord.length;
+        }
+      }
+    } else if (suggestion.type === 'ollama' || suggestion.type === 'tip') {
+      // For general tips, try to find key phrases in the text
+      const words = suggestion.text.split(/[\s\-:]+/).filter(w => w.length > 3);
+      for (let word of words) {
+        const pos = text.toLowerCase().indexOf(word.toLowerCase());
+        if (pos !== -1) {
+          targetWord = text.substring(pos, pos + word.length);
+          startPos = pos;
+          endPos = pos + word.length;
+          break;
+        }
+      }
+    }
+
+    if (startPos === -1) {
+      // If can't find specific text, show general suggestion popup
+      this.showSuggestionPopup(suggestion);
+      return;
+    }
+
+    // Highlight the found text
+    this.pad.focus();
+    this.pad.setSelectionRange(startPos, endPos);
+
+    // Show alternatives or action popup
+    if (isFillerWord(targetWord)) {
+      const alternatives = getSynonyms(targetWord);
+      this.showWordPopup(targetWord, alternatives);
+    } else {
+      this.showSuggestionPopup(suggestion);
+    }
+  },
+
+  // Show general suggestion popup (for non-replaceable suggestions)
+  showSuggestionPopup(suggestion) {
+    const popup = document.getElementById('word-popup');
+    const content = popup.querySelector('.popup-content');
+
+    content.innerHTML = `
+      <div style="font-weight: 500; margin-bottom: 8px; color: var(--text-light); font-size: 12px;">Suggestion:</div>
+      <div style="font-size: 13px; margin-bottom: 8px; line-height: 1.5; color: var(--text);">${suggestion.text}</div>
+      <div style="font-size: 11px; color: var(--text-light);">Review and adjust manually</div>
+    `;
+
+    // Position popup near cursor
+    const start = this.pad.selectionStart;
+    const textBeforeCursor = this.pad.value.substring(0, start);
+    const linesBeforeCursor = textBeforeCursor.split('\n').length - 1;
+    const posX = this.pad.offsetLeft + 20;
+    const posY = this.pad.offsetTop + (linesBeforeCursor * 28) + 50;
+
+    popup.style.left = posX + 'px';
+    popup.style.top = posY + 'px';
+    popup.style.display = 'block';
   },
 
   // Show suggestions panel
