@@ -205,28 +205,26 @@ const Editor = {
     let endPos = -1;
     let targetWord = null;
 
-    // Parse suggestion text to find what to highlight
-    if (suggestion.type === 'filler') {
-      // Extract word from suggestion like: "very" - Remove or replace
-      const match = suggestion.text.match(/^"([^"]+)"/);
-      if (match) {
-        targetWord = match[1];
-        startPos = text.toLowerCase().indexOf(targetWord.toLowerCase());
-        if (startPos !== -1) {
-          endPos = startPos + targetWord.length;
-        }
+    // Extract word from suggestion text
+    // Patterns: "word" or word: or word -
+    const wordMatch = suggestion.text.match(/["']([^"']+)["']|^(\w+)\s*[:\-]|(\w+)\s+detected|of\s+"([^"]+)"/);
+    if (wordMatch) {
+      targetWord = wordMatch[1] || wordMatch[2] || wordMatch[3] || wordMatch[4];
+    }
+
+    // If no word found in suggestion text, try to find any word in the suggestion
+    if (!targetWord) {
+      const words = suggestion.text.match(/\b[a-z]+\b/gi);
+      if (words && words.length > 0) {
+        targetWord = words[0]; // First word
       }
-    } else if (suggestion.type === 'ollama' || suggestion.type === 'tip') {
-      // For general tips, try to find key phrases in the text
-      const words = suggestion.text.split(/[\s\-:]+/).filter(w => w.length > 3);
-      for (let word of words) {
-        const pos = text.toLowerCase().indexOf(word.toLowerCase());
-        if (pos !== -1) {
-          targetWord = text.substring(pos, pos + word.length);
-          startPos = pos;
-          endPos = pos + word.length;
-          break;
-        }
+    }
+
+    // Find the word in the text
+    if (targetWord) {
+      startPos = text.toLowerCase().indexOf(targetWord.toLowerCase());
+      if (startPos !== -1) {
+        endPos = startPos + targetWord.length;
       }
     }
 
@@ -240,11 +238,14 @@ const Editor = {
     this.pad.focus();
     this.pad.setSelectionRange(startPos, endPos);
 
-    // Show alternatives or action popup
-    if (isFillerWord(targetWord)) {
-      const alternatives = getSynonyms(targetWord);
+    // Get alternatives for the word (works for any word now)
+    const alternatives = getSynonyms(targetWord);
+
+    if (alternatives.length > 0) {
+      // Show alternatives if available
       this.showWordPopup(targetWord, alternatives);
     } else {
+      // Show general suggestion if no alternatives
       this.showSuggestionPopup(suggestion);
     }
   },
