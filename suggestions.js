@@ -99,7 +99,7 @@ class SuggestionEngine {
     const words = sentence.trim().split(/\s+/);
 
     // Check for long sentences
-    if (words.length > 35) {
+    if (words.length > 20) {
       tips.push('Long sentence: Consider breaking it up');
     }
 
@@ -111,6 +111,17 @@ class SuggestionEngine {
     // Check for hedge words
     if (/\b(I think|I believe|in my opinion|maybe|perhaps|might)\b/i.test(sentence)) {
       tips.push('Hedging: Be more confident and direct');
+    }
+
+    // Check for repeated words
+    const wordFreq = {};
+    words.forEach(w => {
+      const lower = w.toLowerCase();
+      wordFreq[lower] = (wordFreq[lower] || 0) + 1;
+    });
+    const repeated = Object.entries(wordFreq).find(([_, count]) => count > 2);
+    if (repeated) {
+      tips.push(`Repetition: "${repeated[0]}" used ${repeated[1]} times`);
     }
 
     return tips;

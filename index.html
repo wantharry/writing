@@ -21,6 +21,12 @@
     <main class="main-content">
       <!-- Editor View -->
       <div id="editor-view" class="view active">
+        <div class="editor-header">
+          <div class="llm-status">
+            <div id="llm-indicator" class="status-dot disconnected"></div>
+            <span id="llm-text">Offline</span>
+          </div>
+        </div>
         <div class="editor-container">
           <textarea id="writing-pad" class="writing-pad" placeholder="Start writing... Suggestions will appear as you type."></textarea>
           <div class="suggestions-panel" id="suggestions-panel">

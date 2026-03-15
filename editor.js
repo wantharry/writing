@@ -4,10 +4,14 @@ const Editor = {
   panel: null,
   autoSaveTimer: null,
   lastSavedContent: '',
+  llmIndicator: null,
+  llmText: null,
 
   init() {
     this.pad = document.getElementById('writing-pad');
     this.panel = document.getElementById('suggestions-panel');
+    this.llmIndicator = document.getElementById('llm-indicator');
+    this.llmText = document.getElementById('llm-text');
 
     // Load last entry or empty pad
     const activeEntry = storage.getActiveEntry();
@@ -24,6 +28,38 @@ const Editor = {
 
     // Set up auto-save every 3 seconds
     setInterval(() => this.autoSave(), 3000);
+
+    // Check LLM connection on init and every 10 seconds
+    this.checkLLMConnection();
+    setInterval(() => this.checkLLMConnection(), 10000);
+  },
+
+  // Check if LLM (Ollama) is connected
+  async checkLLMConnection() {
+    const settings = storage.getSettings();
+    if (settings.suggestionMode !== 'ollama') {
+      this.updateLLMStatus(false, 'Lightweight mode');
+      return;
+    }
+
+    try {
+      const result = await suggestionEngine.testOllamaConnection();
+      this.updateLLMStatus(result.success, result.success ? 'Connected' : 'Disconnected');
+    } catch (error) {
+      this.updateLLMStatus(false, 'Error');
+    }
+  },
+
+  // Update LLM status indicator
+  updateLLMStatus(connected, text) {
+    if (connected) {
+      this.llmIndicator.classList.remove('disconnected');
+      this.llmIndicator.classList.add('connected');
+    } else {
+      this.llmIndicator.classList.remove('connected');
+      this.llmIndicator.classList.add('disconnected');
+    }
+    this.llmText.textContent = text;
   },
 
   // Handle text input - debounced suggestions
