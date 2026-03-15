@@ -43,17 +43,28 @@ const Editor = {
   async updateSuggestions() {
     const text = this.pad.value;
 
-    if (text.trim().length < 10) {
+    if (text.trim().length < 5) {
       this.hideSuggestions();
       return;
     }
 
     try {
       const suggestions = await suggestionEngine.getSuggestions(text);
+      console.log('Suggestions:', suggestions);
 
-      if (suggestions.length === 0) {
-        this.hideSuggestions();
-        return;
+      // Check if both sentence and words are empty
+      if (!suggestions.sentence && !suggestions.words) {
+        // Old format (array) - check if empty
+        if (!Array.isArray(suggestions) || suggestions.length === 0) {
+          this.hideSuggestions();
+          return;
+        }
+      } else {
+        // New format (object)
+        if (suggestions.sentence.length === 0 && suggestions.words.length === 0) {
+          this.hideSuggestions();
+          return;
+        }
       }
 
       this.displaySuggestions(suggestions);

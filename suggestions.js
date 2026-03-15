@@ -66,6 +66,15 @@ class SuggestionEngine {
       });
     });
 
+    // Add general tip if no other suggestions
+    if (sentenceSuggestions.length === 0 && wordSuggestions.length === 0) {
+      sentenceSuggestions.push({
+        type: 'tip',
+        text: 'Keep writing! Tips will appear as you write.',
+        severity: 'info',
+      });
+    }
+
     return {
       sentence: sentenceSuggestions.slice(0, 3),
       words: wordSuggestions.slice(0, 3),
