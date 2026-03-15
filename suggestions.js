@@ -40,11 +40,25 @@ class SuggestionEngine {
     const sentenceSuggestions = [];
     const wordSuggestions = [];
 
+    // Check if user is typing a partial word (word completion)
+    const partialWord = this.getPartialWord(text);
+    if (partialWord && partialWord.length >= 2) {
+      // Add word completion suggestions
+      const completions = this.getLocalWordSuggestions(partialWord);
+      completions.forEach(word => {
+        wordSuggestions.push({
+          type: 'completion',
+          text: `→ ${word}`,
+          severity: 'info',
+        });
+      });
+    }
+
     // Word-level suggestions: filler words in current sentence
     const words = currentSentence.toLowerCase().match(/\b\w+\b/g) || [];
     const fillerWords = words.filter(word => isFillerWord(word));
 
-    fillerWords.slice(0, 3).forEach(word => {
+    fillerWords.slice(0, 3 - wordSuggestions.length).forEach(word => {
       const feedback = getFillerWordFeedback(word);
       if (feedback) {
         wordSuggestions.push({
@@ -79,6 +93,12 @@ class SuggestionEngine {
       sentence: sentenceSuggestions.slice(0, 3),
       words: wordSuggestions.slice(0, 3),
     };
+  }
+
+  // Get the partial word being typed at the end of text
+  getPartialWord(text) {
+    const lastWord = text.match(/\S*$/);
+    return lastWord ? lastWord[0] : '';
   }
 
   // Get current sentence being edited
@@ -207,6 +227,85 @@ Be concise. Format as bullet points.`;
   getWordAlternatives(word) {
     const synonyms = getSynonyms(word);
     return synonyms.length > 0 ? synonyms : [];
+  }
+
+  // Get word suggestions (autocomplete) for partial word being typed
+  async getWordSuggestions(partialWord) {
+    if (!partialWord || partialWord.length < 2) {
+      return [];
+    }
+
+    try {
+      // Use Free Dictionary API to get word suggestions
+      const response = await fetch(
+        `https://api.api-ninjas.com/v1/dictionary?word=${partialWord}`,
+        {
+          headers: { 'X-Api-Key': 'your-key-here' } // Free tier might not need key
+        }
+      );
+
+      if (!response.ok) {
+        // Fallback to local suggestions
+        return this.getLocalWordSuggestions(partialWord);
+      }
+
+      const data = await response.json();
+      return data.definitions ? [data.word] : [];
+    } catch (error) {
+      // Fallback to local word list
+      return this.getLocalWordSuggestions(partialWord);
+    }
+  }
+
+  // Local word suggestions (fallback)
+  getLocalWordSuggestions(partialWord) {
+    const commonWords = [
+      'about', 'above', 'absolutely', 'accept', 'access', 'account', 'achieve', 'action', 'activity',
+      'actually', 'add', 'additional', 'address', 'adjust', 'admit', 'advance', 'adverse', 'advice',
+      'advise', 'affair', 'afford', 'afraid', 'after', 'again', 'against', 'age', 'agency', 'agenda',
+      'agent', 'agree', 'agreement', 'ahead', 'aid', 'aim', 'air', 'aircraft', 'alarm', 'albeit',
+      'album', 'alcohol', 'alert', 'alien', 'align', 'alive', 'all', 'allow', 'almost', 'alone',
+      'along', 'already', 'also', 'alter', 'alternative', 'although', 'always', 'amateur', 'amazing',
+      'among', 'amount', 'analysis', 'analyze', 'ancient', 'and', 'anger', 'angle', 'angry', 'animal',
+      'announce', 'annual', 'another', 'answer', 'antenna', 'anticipate', 'anxiety', 'anxious', 'any',
+      'anybody', 'anymore', 'anyone', 'anything', 'anyway', 'anywhere', 'apart', 'apartment', 'apology',
+      'apparent', 'appeal', 'appear', 'appearance', 'apple', 'application', 'apply', 'appoint', 'appointment',
+      'appreciate', 'approach', 'appropriate', 'approval', 'approve', 'approximate', 'april', 'arbitrary',
+      'arc', 'arch', 'architect', 'architecture', 'archive', 'area', 'argue', 'argument', 'arise', 'arm',
+      'armed', 'army', 'around', 'arrange', 'arrangement', 'arrest', 'arrival', 'arrive', 'arrow', 'art',
+      'article', 'artificial', 'artist', 'artistic', 'as', 'ash', 'aside', 'ask', 'aspect', 'assault',
+      'asset', 'assign', 'assignment', 'assist', 'assistant', 'associate', 'association', 'assume', 'assumption',
+      'assure', 'attach', 'attachment', 'attack', 'attain', 'attempt', 'attend', 'attendance', 'attendant',
+      'attention', 'attitude', 'attorney', 'attract', 'attraction', 'attractive', 'audience', 'august', 'aunt',
+      'authentic', 'author', 'authority', 'authorization', 'authorize', 'automatic', 'automobile', 'autumn', 'available',
+      'avenue', 'average', 'aversion', 'avoid', 'await', 'awake', 'award', 'aware', 'awareness', 'away',
+      'awesome', 'awful', 'awhile', 'awkward', 'axis', 'baby', 'back', 'background', 'backward', 'bacon',
+      'bacteria', 'badge', 'badly', 'bag', 'bail', 'bait', 'bake', 'balance', 'balcony', 'bald', 'ball',
+      'balloon', 'band', 'bang', 'bank', 'banner', 'bar', 'bare', 'barely', 'bargain', 'barge', 'bark',
+      'barrel', 'base', 'basement', 'basic', 'basket', 'bass', 'bat', 'batch', 'bath', 'bathroom',
+      'battery', 'battle', 'beach', 'bead', 'beam', 'bean', 'bear', 'beard', 'bearing', 'beast',
+      'beat', 'beauty', 'because', 'become', 'beef', 'been', 'beer', 'before', 'began', 'begin',
+      'behalf', 'behave', 'behavior', 'behind', 'being', 'belief', 'believe', 'bell', 'belly', 'belong',
+      'below', 'belt', 'bench', 'bend', 'beneath', 'benefit', 'bent', 'berry', 'beside', 'best',
+      'bet', 'better', 'between', 'beyond', 'bible', 'bicycle', 'bid', 'big', 'bill', 'billion',
+      'bind', 'bird', 'birth', 'bit', 'bite', 'bitter', 'black', 'blade', 'blame', 'blank',
+      'blanket', 'blast', 'bleak', 'bleed', 'blend', 'bless', 'blind', 'blink', 'bliss', 'block',
+      'blood', 'blossom', 'blow', 'blue', 'blush', 'board', 'boat', 'body', 'boil', 'bold',
+      'bolt', 'bomb', 'bond', 'bone', 'bonus', 'book', 'boom', 'boost', 'booth', 'border',
+      'bore', 'born', 'borrow', 'boss', 'both', 'bother', 'bottle', 'bottom', 'bounce', 'bound',
+      'bow', 'bowl', 'box', 'boy', 'brain', 'brand', 'brass', 'brave', 'breach', 'bread',
+      'break', 'breast', 'breath', 'breathe', 'breed', 'breeze', 'brew', 'brick', 'bride', 'bridge',
+      'brief', 'bright', 'bring', 'brink', 'brisk', 'broad', 'broadcast', 'broke', 'broken', 'bronze',
+      'brook', 'broom', 'brother', 'brought', 'brow', 'brown', 'browse', 'brush', 'bubble', 'bucket',
+      'bud', 'budget', 'buffalo', 'buffer', 'bug', 'build', 'building', 'bulk', 'bull', 'bullet',
+      'bundle', 'burden', 'bureau', 'burn', 'burst', 'bury', 'bus', 'bush', 'business', 'busy',
+      'but', 'butter', 'button', 'buy', 'buyer', 'buzz', 'by', 'bye', 'byte'
+    ];
+
+    const lower = partialWord.toLowerCase();
+    return commonWords
+      .filter(word => word.startsWith(lower))
+      .slice(0, 5); // Return top 5 suggestions
   }
 }
 

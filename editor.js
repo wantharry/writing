@@ -201,6 +201,24 @@ const Editor = {
   // Handle suggestion click - highlight issue and show options
   handleSuggestionClick(suggestion) {
     const text = this.pad.value;
+
+    // Handle word completion (autocomplete)
+    if (suggestion.type === 'completion') {
+      const suggestedWord = suggestion.text.replace('→ ', '').trim();
+      const partialWord = suggestionEngine.getPartialWord(text);
+
+      if (partialWord) {
+        // Replace partial word with suggested word
+        const beforeWord = text.substring(0, text.length - partialWord.length);
+        this.pad.value = beforeWord + suggestedWord;
+        this.pad.selectionStart = beforeWord.length + suggestedWord.length;
+        this.pad.selectionEnd = this.pad.selectionStart;
+        this.updateWordCount();
+        this.pad.dispatchEvent(new Event('input'));
+      }
+      return;
+    }
+
     let startPos = -1;
     let endPos = -1;
     let targetWord = null;
